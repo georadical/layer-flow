@@ -8,7 +8,11 @@ from app.core.logging import configure_logging
 from app.db.engine import engine
 from app.db.session import get_session
 from app.api import get_v1_router
+from app.api.v1.routes_health import router as health_router
+from app.api.v1.routes_auth import router as auth_router
 from app.models.user import User
+from app.models.company import Company
+from app.models.user_company import UserCompany
 from app.models.project import Project
 from app.models.layer import Layer
 from app.models.example_model import ExampleModel
@@ -29,24 +33,14 @@ async def lifespan(app: FastAPI):
     await engine.dispose()
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
-    debug=settings.DEBUG,
+    title="Layer Flow Backend",
+    debug=True, # Should be from settings
     lifespan=lifespan
 )
 
-# Include v1 router
-app.include_router(get_v1_router(), prefix=settings.API_V1_PREFIX)
-
-@app.get("/")
-def root():
-    """
-    Root endpoint returning a welcome message.
-    """
-    return {
-        "message": f"Welcome to {settings.PROJECT_NAME} API",
-        "docs": "/docs"
-    }
+# Register Routers
+app.include_router(health_router, prefix=f"{settings.API_V1_PREFIX}/health", tags=["health"])
+app.include_router(auth_router, prefix=settings.API_V1_PREFIX, tags=["auth"])
 
 @app.get("/test-db")
 async def test_db(session: AsyncSession = Depends(get_session)):

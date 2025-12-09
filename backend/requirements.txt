@@ -6,3 +6,11 @@ sqlmodel
 asyncpg
 python-dotenv
 alembic
+pytest
+pytest-asyncio
+httpx
+passlib[argon2]
+aiosqlite
+python-jose[cryptography]
+python-multipart
+email-validator

@@ -1,6 +1,9 @@
 from datetime import datetime
-from typing import Optional
-from sqlmodel import SQLModel, Field, func
+from typing import Optional, List, TYPE_CHECKING
+from sqlmodel import SQLModel, Field, func, Relationship
+
+if TYPE_CHECKING:
+    from app.models.user_company import UserCompany
 
 class User(SQLModel, table=True):
     __tablename__ = "users"
@@ -21,3 +24,5 @@ class User(SQLModel, table=True):
         default=None, 
         sa_column_kwargs={"server_default": func.now()}
     )
+
+    companies: List["UserCompany"] = Relationship(back_populates="user", sa_relationship_kwargs={"cascade": "all, delete"})

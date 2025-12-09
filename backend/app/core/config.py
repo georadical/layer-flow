@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     
     ENVIRONMENT: str = "local"
+    
+    # Auth settings
+    SECRET_KEY: str = "supersecretkey" # Change in production!
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
     class Config:
         env_file = ".env"
