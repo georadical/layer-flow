@@ -28,3 +28,13 @@ dist/
 
 # Logs
 *.log
+
+# Frontend (Next.js)
+node_modules/
+.next/
+frontend/.env
+frontend/.env.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
