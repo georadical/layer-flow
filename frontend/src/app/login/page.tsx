@@ -1,40 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
-import { setToken } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
-    const router = useRouter();
+    const { login, error, loading, clearError } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
-        setLoading(true);
+        clearError();
 
         try {
-            // Backend expects OAuth2 form data
-            const formData = new URLSearchParams();
-            formData.append('username', email); // backend usually expects username field for OAuth2
-            formData.append('password', password);
-
-            const data = await apiFetch<{ access_token: string }>('/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: formData.toString(),
-            });
-
-            setToken(data.access_token);
-            router.push('/dashboard');
-        } catch (err: any) {
-            setError(err.message || 'Login failed');
-        } finally {
-            setLoading(false);
+            await login(email, password);
+        } catch (err) {
+            // Error is handled by Auth Context
         }
     };
 

@@ -14,3 +14,5 @@ aiosqlite
 python-jose[cryptography]
 python-multipart
 email-validator
+Authlib
+itsdangerous

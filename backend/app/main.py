@@ -10,12 +10,15 @@ from app.db.session import get_session
 from app.api import get_v1_router
 from app.api.v1.routes_health import router as health_router
 from app.api.v1.routes_auth import router as auth_router
+from app.api.v1.routes_oauth import router as oauth_router
+from app.api.v1.routes_users import router as users_router
 from app.models.user import User
 from app.models.company import Company
 from app.models.user_company import UserCompany
 from app.models.project import Project
 from app.models.layer import Layer
 from app.models.example_model import ExampleModel
+from app.core import security
 
 # Configure logging early
 configure_logging()
@@ -38,9 +41,30 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# CORS Middleware
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+# Session Middleware (Required for OAuth state)
+from starlette.middleware.sessions import SessionMiddleware
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SESSION_SECRET_KEY,
+    same_site="lax",
+    https_only=False # Set to True in production
+)
+
 # Register Routers
 app.include_router(health_router, prefix=f"{settings.API_V1_PREFIX}/health", tags=["health"])
 app.include_router(auth_router, prefix=settings.API_V1_PREFIX, tags=["auth"])
+app.include_router(oauth_router, prefix=f"{settings.API_V1_PREFIX}/auth", tags=["oauth"])
+app.include_router(users_router, prefix=f"{settings.API_V1_PREFIX}/users", tags=["users"])
 
 @app.get("/test-db")
 async def test_db(session: AsyncSession = Depends(get_session)):

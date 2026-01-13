@@ -1,12 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
-import { setToken } from '@/lib/auth';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function SignupPage() {
-    const router = useRouter();
+    const { signup, error, loading, clearError } = useAuth();
     const [formData, setFormData] = useState({
         email: '',
         confirmEmail: '',
@@ -14,8 +12,6 @@ export default function SignupPage() {
         confirmPassword: ''
     });
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
-    const [generalError, setGeneralError] = useState('');
-    const [loading, setLoading] = useState(false);
 
     const validate = () => {
         const newErrors: { [key: string]: string } = {};
@@ -52,52 +48,30 @@ export default function SignupPage() {
                 return newErrors;
             });
         }
-        if (generalError) setGeneralError('');
+        if (error) clearError();
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setGeneralError('');
+        clearError();
 
         if (!validate()) return;
 
-        setLoading(true);
-
         try {
-            const data = await apiFetch<any>('/signup', {
-                method: 'POST',
-                body: JSON.stringify({
-                    email: formData.email,
-                    password: formData.password
-                }),
-            });
-
-            // Save token and redirect to dashboard
-            if (data.access_token) {
-                setToken(data.access_token);
-                router.push('/dashboard');
-            } else {
-                // Determine behavior if no token returned (e.g. email verification required?)
-                // For this requirement, we just redirect to login if no token.
-                router.push('/login');
-            }
-        } catch (err: any) {
-            const msg = err.message || 'Signup failed';
-            setGeneralError(msg);
-        } finally {
-            setLoading(false);
+            await signup(formData.email, formData.password);
+        } catch (err) {
+            // Error is handled by Auth Context
         }
     };
 
     const isFormValid = () => {
-        // basic check to ensure fields aren't empty for button disable
         return Object.values(formData).every(val => val.trim() !== '') && Object.keys(errors).length === 0;
     };
 
     return (
         <div style={{ padding: '2rem', maxWidth: '400px', margin: '0 auto' }}>
             <h1>Sign Up</h1>
-            {generalError && <p style={{ color: 'red', marginBottom: '1rem' }}>{generalError}</p>}
+            {error && <p style={{ color: 'red', marginBottom: '1rem' }}>{error}</p>}
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {/* Email */}
@@ -165,7 +139,7 @@ export default function SignupPage() {
                         opacity: (loading || !isFormValid()) ? 0.7 : 1
                     }}
                 >
-                    {loading ? 'Sign Up...' : 'Sign Up'}
+                    {loading ? 'Signing up...' : 'Sign Up'}
                 </button>
             </form>
         </div>

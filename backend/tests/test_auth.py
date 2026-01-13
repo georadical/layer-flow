@@ -29,9 +29,8 @@ async def test_signup(test_session, test_engine):
     
     assert response.status_code == 200
     data = response.json()
-    assert data["email"] == "signup@example.com"
-    assert "id" in data
-    assert "hashed_password" not in data
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
 
     # Verify DB
     from sqlmodel import select
@@ -148,6 +147,9 @@ async def test_protected_route(test_session):
         response = await ac.get("/api/v1/auth-test", headers={
             "Authorization": f"Bearer {token}"
         })
+
+    assert response.status_code == 200
+    assert response.json()["email"] == "token@example.com"
 
     assert response.status_code == 200
     assert response.json()["email"] == "token@example.com"

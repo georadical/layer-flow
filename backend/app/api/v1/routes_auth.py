@@ -9,6 +9,7 @@ from sqlmodel import select
 from app.core import security, jwt
 from app.core.config import get_settings
 from app.db.session import get_session
+from app.core.deps import get_current_user
 from app.models.user import User
 from app.schemas.user import UserCreate, UserRead
 from app.schemas.auth import Token
@@ -16,7 +17,7 @@ from app.schemas.auth import Token
 router = APIRouter()
 settings = get_settings()
 
-@router.post("/signup", response_model=UserRead)
+@router.post("/signup", response_model=Token)
 async def signup(
     user_in: UserCreate,
     session: AsyncSession = Depends(get_session)
@@ -44,7 +45,13 @@ async def signup(
     session.add(user)
     await session.commit()
     await session.refresh(user)
-    return user
+
+    # Generate token
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = jwt.create_access_token(
+        data={"sub": str(user.id)}, expires_delta=access_token_expires
+    )
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/login", response_model=Token)
 async def login(
@@ -74,3 +81,12 @@ async def login(
         data={"sub": str(user.id)}, expires_delta=access_token_expires
     )
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/logout")
+async def logout(current_user: User = Depends(get_current_user)) -> Any:
+    """
+    Logout the current user.
+    Since JWTs are stateless, this endpoint doesn't invalidate the token server-side,
+    but provides a clear API contract for the frontend to remove the token.
+    """
+    return {"detail": "Logged out successfully"}
